@@ -15,7 +15,23 @@ dependencies {
     implementation(libs.imgui.lwjgl3) {
         exclude(group = "org.lwjgl", module = "lwjgl-sdl") // we use the GLFW backend only
     }
-    runtimeOnly(libs.imgui.natives.linux)
+    val platform = providers.gradleProperty("targetPlatform").orElse(
+        providers.systemProperty("os.name").map { name ->
+            val os = name.lowercase()
+            when {
+                os.contains("win") -> "windows"
+                os.contains("mac") -> "macos"
+                else -> "linux"
+            }
+        },
+    ).get()
+    runtimeOnly(
+        when (platform) {
+            "windows" -> libs.imgui.natives.windows
+            "macos" -> libs.imgui.natives.macos
+            else -> libs.imgui.natives.linux
+        },
+    )
 
     // Headless 3D rendering in tests: an OpenGL context via EGL without any window system (Mesa).
     testImplementation(libs.lwjgl.egl)
